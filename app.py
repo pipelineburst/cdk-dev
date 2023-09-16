@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 
 import aws_cdk as cdk
-from cdk_dev.sbom_stack import SbomValStack
+from cdk_dev.sbom_stack import EcrInspectorStack
 
 
 app = cdk.App()
 
-stack1 = SbomValStack(app, "sbom-val-cdk", 
-            description="Resources for SBOM validation", 
+stack1 = EcrInspectorStack(app, "EcrInspectorStack", 
+            description="Resources for ECR and SBOM validation", 
             termination_protection=False, 
             tags={"dep":"digital"}, 
             env=cdk.Environment(region="eu-west-1")
