@@ -56,21 +56,21 @@ class EcrInspectorStack(Stack):
                 )
         )
         
-        ### Provision a ECR private repository
-        # Create the ECR container image repository with the ECR construct
+        # ### Provision a ECR private repository
+        # # Create the ECR container image repository with the ECR construct
         
-        repository = ecr.Repository(self, "my-ecr-image-repository",
-            repository_name="my-ecr-image-repository",
-            image_scan_on_push=True,
-            image_tag_mutability=ecr.TagMutability.IMMUTABLE,
-            encryption=ecr.RepositoryEncryption.KMS,
-        )
+        # repository = ecr.Repository(self, "my-ecr-image-repository",
+        #     repository_name="my-ecr-image-repository",
+        #     image_scan_on_push=True,
+        #     image_tag_mutability=ecr.TagMutability.IMMUTABLE,
+        #     encryption=ecr.RepositoryEncryption.KMS,
+        # )
         
-        # Apply a life cycle rule to the repository we just created
+        # # Apply a life cycle rule to the repository we just created
         
-        repository_lcr = repository.add_lifecycle_rule(
-            max_image_age=Duration.days(30)
-            )
+        # repository_lcr = repository.add_lifecycle_rule(
+        #     max_image_age=Duration.days(30)
+        #     )
 
         ### Create KMS asymmetric signing key with an alias
         
