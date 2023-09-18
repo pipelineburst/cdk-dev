@@ -14,8 +14,8 @@ class EksSbomStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        ### Create EKS cluster prep work
-        # Creating cluster IAM roles
+        ### 1. Prep work prior to creating the EKS cluster
+        # Defining IAM roles for eks-admin and eks-readonly so we can use them later when creating the EKS cluster
 
         masters_role = iam.Role(
             self,
@@ -63,33 +63,33 @@ class EksSbomStack(Stack):
             removal_policy=RemovalPolicy.DESTROY,
     )
 
-        ### Create EKS cluster from construct library
+        ### 2. Create EKS cluster from construct library
+        # Creating the EKS cluster
         
         cluster = eks.Cluster(self, "EKS validation cluster",
             cluster_name="sbom-validation-cluster",
             version=eks.KubernetesVersion.V1_27,
-            masters_role=masters_role,
+            masters_role=masters_role, # this adds the eks-admin role to aws-auth as systems:masters
             default_capacity=0,
-#            kubectl_layer=acs.eks_kubectl_layer,
             cluster_logging=k8s_logging_params,
             secrets_encryption_key=eks_key,
         )
         
-        self.ekscluster=cluster
-
-        # Adding our masters role to aws-auth 
-        
-        masters_role.grant_assume_role(cluster.admin_role)
-
-        cluster.aws_auth.add_role_mapping(
-            readonly_role, groups=["system:authenticated"]
-        )
+        self.ekscluster=cluster # Reference for a downstream Stack
 
         # Adding a MNG to the cluster 
+
+        masters_role.grant_assume_role(cluster.admin_role) # grant permission to masters_role to assume he cluster admin_role
 
         cluster.add_nodegroup_capacity("custom-node-group",
             instance_types=[ec2.InstanceType("m5.large")],
             min_size=1,
             disk_size=100,
             ami_type=eks.NodegroupAmiType.BOTTLEROCKET_X86_64,
+        )
+        
+        # Adding our readonly role to aws-auth
+        
+        cluster.aws_auth.add_role_mapping(
+            readonly_role, groups=["system:authenticated"]
         )
