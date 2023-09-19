@@ -7,6 +7,7 @@ from aws_cdk import (
     aws_eks as eks,
     aws_iam as iam,
     RemovalPolicy,
+    lambda_layer_kubectl_v27,
 )
 
 class EksSbomStack(Stack):
@@ -64,7 +65,7 @@ class EksSbomStack(Stack):
     )
 
         ### 2. Create EKS cluster from construct library
-        # Creating the EKS cluster
+        # Creating the EKS cluster     
         
         cluster = eks.Cluster(self, "EKS validation cluster",
             cluster_name="sbom-validation-cluster",
@@ -72,6 +73,9 @@ class EksSbomStack(Stack):
             masters_role=masters_role, # this adds the eks-admin role to aws-auth as systems:masters
             default_capacity=0,
             cluster_logging=k8s_logging_params,
+            kubectl_layer=lambda_layer_kubectl_v27.KubectlV27Layer(
+                self, "kubectl"
+            ),
             secrets_encryption_key=eks_key,
         )
         

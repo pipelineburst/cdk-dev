@@ -1,0 +1,49 @@
+apiVersion: kyverno.io/v1
+kind: ClusterPolicy
+metadata:
+  name: verify-image
+  annotations:
+    policies.kyverno.io/title: Verify Image
+    policies.kyverno.io/category: Sample, EKS Best Practices
+    policies.kyverno.io/severity: medium
+    policies.kyverno.io/subject: Pod
+    policies.kyverno.io/minversion: 1.7.0
+    policies.kyverno.io/description: >-
+      Using the Cosign project, OCI images may be signed to ensure supply chain
+      security is maintained. Those signatures can be verified before pulling into
+      a cluster. This policy checks the signature of an image repo called
+      ghcr.io/kyverno/test-verify-image to ensure it has been signed by verifying
+      its signature against the provided public key. This policy serves as an illustration for
+      how to configure a similar rule and will require replacing with your image(s) and keys.      
+spec:
+  validationFailureAction: audit
+  background: false
+  rules:
+    - name: verify-image
+      match:
+        any:
+        - resources:
+            kinds:
+              - Pod
+      verifyImages:
+      - imageReferences:
+        - "*:*"
+        mutateDigest: true
+        attestors:
+        - entries:
+          - keys:
+              publicKeys: |
+                -----BEGIN PUBLIC KEY-----
+                MIICIjANBgkqhkiG9w0BAQEFAAOCAg8AMIICCgKCAgEAk9pEXiznlhgCVrDbHmrq
+                2y6PdBuRQlO/2rxIYwTLzQ0TnEilpzSfrjBEtUzDCemLIdO2WOtItFp3TZXjg0FQ
+                +IM55C2d1C65bWdOtio+4aJ+CaKkGKZHqpL61gOGTtyr319QlYKDx3BlxgAgP9kr
+                aKrtd2I1VWqS/wKVz8ppNPtHc3D4VpkANaRpdgcYCOUAWafPtJWsYROhx8JvylCf
+                Dx0Z2iGoiy9EXALa6VM3KMOG7TxHgtu0Z1bw03PneH90WCoBVLLvDAJaNsIHENJi
+                UakZVbZJhEe/khxaqcL+ySc9D3h6PvLpQkRmRxHJjLxiHjUODqdDIuwHG4X3ypnw
+                yy6m0+SvHaG7Iyrd9WjJZ/uRyt5smOTYJyx6LJ9Nox7BhDjy3AEpu6QzSH4LXqew
+                eFzyegePccad84d4i59lUFULExUTzwwNlZTgo1IOFDhXvvawroUVAFLd1MOKztc2
+                wcmc8y+AkicYcMeQzzpDe+gYw9nMvaynr7yFq/PR9ejT5ESIypLh5fXJebytlX4m
+                K+RXzv7jHIdR8NOgLi5QhhJwSpEtu9SSWz+33BN8AwCvcGIAaWaN9YppENmdWzec
+                BV2ZY1ISHC5m6KlMzbaMu3n9vV2bXKhVEmCZ5GEcpB+ZbXF315Zg1V3SwFjmekqH
+                bkITLsYqU6M5dFVd9mn4BRMCAwEAAQ==
+                -----END PUBLIC KEY-----

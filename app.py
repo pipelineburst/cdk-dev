@@ -30,7 +30,7 @@ stack3 = WorkloadDeploy(app, "WorkloadDeployStack",
             cluster=stack2.ekscluster,
         )    
 
-stack3.add_dependency(stack2)
+# stack3.add_dependency(stack2)
 
 cdk.Tags.of(stack1).add(key="owner",value="Digital")
 cdk.Tags.of(stack2).add(key="owner",value="Digital")
