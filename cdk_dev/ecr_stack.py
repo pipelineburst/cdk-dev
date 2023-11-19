@@ -11,13 +11,13 @@ from aws_cdk import (
     RemovalPolicy,
 )
 
-class EcrInspectorStack(Stack):
+class EcrStack(Stack):
 
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
 
-        ### Update ECR private registry level properties
-        # 1. Define the input dictionary content for the putRegistryScanningConfiguration AwsSdk call
+        ### 1. Update ECR private registry level properties
+        # Define the input dictionary content for the putRegistryScanningConfiguration AwsSdk call
         
         onUpdateRegistryParams = {
             "scanType": 'ENHANCED',
@@ -34,7 +34,7 @@ class EcrInspectorStack(Stack):
             ]
         }
 
-        # 2. Define a custom resource to make an putRegistryScanningConfiguration AwsSdk call to the Amazon ECR API     
+        # Define a custom resource to make an putRegistryScanningConfiguration AwsSdk call to the Amazon ECR API     
            
         registry_cr = cr.AwsCustomResource(self, "EnhancedScanningEnabler",
                 on_create=cr.AwsSdkCall(
@@ -47,7 +47,7 @@ class EcrInspectorStack(Stack):
                     )
             )
  
-        # 3. Define a IAM permission policy for the custom resource    
+        # Define a IAM permission policy for the custom resource    
               
         registry_cr.grant_principal.add_to_principal_policy(iam.PolicyStatement(
                 effect=iam.Effect.ALLOW,
@@ -56,7 +56,7 @@ class EcrInspectorStack(Stack):
                 )
         )
         
-        # ### Provision a ECR private repository
+        # ### 2. Provision a ECR private repository
         # # Create the ECR container image repository with the ECR construct
         
         # repository = ecr.Repository(self, "my-ecr-image-repository",
@@ -72,7 +72,7 @@ class EcrInspectorStack(Stack):
         #     max_image_age=Duration.days(30)
         #     )
 
-        ### Create KMS asymmetric signing key with an alias
+        ### 3. Create KMS asymmetric signing key with an alias
         
         key = kms.Key(self, "MyKey",
             key_spec=kms.KeySpec.RSA_4096,

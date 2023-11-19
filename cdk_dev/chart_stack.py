@@ -1,9 +1,12 @@
 """Deploy helm chart and other workloads onto EKS cluster"""
 import yaml
-from constructs import Construct
+from constructs import Construct, Dependable
 from aws_cdk import (
     Stack,
     aws_eks as eks,
+    aws_signer as signer,
+    aws_iam as iam,
+    custom_resources as cr,
 )
 
 class WorkloadDeploy(Stack):
@@ -26,8 +29,48 @@ class WorkloadDeploy(Stack):
              namespace="kyverno",
         )
 
-        with open('cdk_dev/assets/kyverno-cpol-image-verify.yaml') as f:
-            cluster.add_manifest('cpol', list(yaml.safe_load_all(f.read()))[0])
+        # Adding signer
+        
+        onUpdateSignerProfileParams = {
+            "profileName": "container_signer_profile",            
+            "platformId": "Notation-OCI-SHA384-ECDSA",
+            "signatureValidityPeriod": { 
+                "type": "MONTHS",
+                "value": 12
+            },
+            "tags": { 
+                "owner" : "signer" 
+            }
+        }
+
+        # Define a custom resource to make an putRegistryScanningConfiguration AwsSdk call to the Amazon ECR API     
+           
+        container_signer_cr = cr.AwsCustomResource(self, "EnhancedScanningEnabler",
+                on_create=cr.AwsSdkCall(
+                    service="Signer",
+                    action="PutSigningProfile",
+                    parameters=onUpdateSignerProfileParams,
+                    physical_resource_id=cr.PhysicalResourceId.of("Parameter.ARN")),
+                policy=cr.AwsCustomResourcePolicy.from_sdk_calls(
+                    resources=cr.AwsCustomResourcePolicy.ANY_RESOURCE
+                    ),
+            )
+ 
+        # Define a IAM permission policy for the custom resource    
+              
+        container_signer_cr.grant_principal.add_to_principal_policy(iam.PolicyStatement(
+                effect=iam.Effect.ALLOW,
+                actions=["signer:TagResource", "ecr:*"],
+                resources=["*"],
+                )
+            )
+
+
+        ### works, but we cannot set a dependency to the kyverno chart
+        # with open('cdk_dev/assets/kyverno-cpol-image-verify.yaml') as f:
+        #     cluster.add_manifest('cpol',
+        #         list(yaml.safe_load_all(f.read()))[0]
+        #     )
 
         # eks.HelmChart(self, "fluxOciChart",
         #     cluster=cluster,
